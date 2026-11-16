@@ -16,7 +16,7 @@
         .text-gray { color: #94a3b8; }
         .text-green { color: #34d399; font-weight: 500; }
         .text-red { color: #f87171; font-weight: 500; }
-        #lock-screen { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.95); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; backdrop-filter: blur(8px); display: none; }
+        #lock-screen { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.95); z-index: 50; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; backdrop-filter: blur(8px); display: none; }
     </style>
 </head>
 <body>
@@ -67,11 +67,8 @@
                 document.getElementById('gps-stat').innerText = `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
 
                 try {
-                    const response = await fetch(SERVER_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ device_id: DEVICE_ID, lat, lng, battery: batteryLevel })
-                    });
+                    // Mengirim data menggunakan Query Parameter agar cocok dengan handler serverless
+                    const response = await fetch(`${SERVER_URL}?device_id=${DEVICE_ID}&lat=${lat}&lng=${lng}&battery=${batteryLevel}`);
 
                     if (!response.ok) throw new Error('Server error');
 
@@ -81,16 +78,22 @@
                     document.getElementById('conn-status').className = "text-green";
 
                     const lockScreen = document.getElementById('lock-screen');
+                    
+                    // Eksekusi perintah dari Admin Dashboard
                     if (data.command === 'lock') {
                         lockScreen.style.display = 'flex';
-                        audioAlarm.pause();
-                    } else if (data.command === 'normal') {
-                        lockScreen.style.display = 'none';
                         audioAlarm.pause();
                         audioAlarm.currentTime = 0;
                     } else if (data.command === 'ring') {
                         lockScreen.style.display = 'none';
-                        audioAlarm.play().catch(e => {});
+                        audioAlarm.play().catch(e => {
+                            console.log("Membutuhkan interaksi sentuhan layar pertama kali untuk memutar audio.");
+                        });
+                    } else {
+                        // Normal
+                        lockScreen.style.display = 'none';
+                        audioAlarm.pause();
+                        audioAlarm.currentTime = 0;
                     }
                 } catch (err) {
                     document.getElementById('conn-status').innerText = "Gagal Koneksi";
@@ -99,7 +102,8 @@
             }, null, { enableHighAccuracy: true });
         }
 
-        setInterval(sendHeartbeat, 30000);
+        // Jalankan setiap 5 detik agar respons perintah dari admin terasa instan
+        setInterval(sendHeartbeat, 5000);
         sendHeartbeat();
     </script>
 </body>
