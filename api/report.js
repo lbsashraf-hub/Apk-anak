@@ -1,6 +1,6 @@
 let devices = {};
 
-export default async function handler(req, res) {
+export default function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -9,35 +9,30 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
-    if (req.method === 'POST') {
-        let body = req.body;
-        
-        // Pastikan body ter-parse jika dikirim sebagai string
-        if (typeof body === 'string') {
-            try {
-                body = JSON.parse(body);
-            } catch (e) {
-                body = {};
-            }
-        }
+    const { device_id, lat, lng, battery, cmd } = req.query;
+    const targetDevice = device_id || 'hp-anak-01';
 
-        const { device_id, lat, lng, battery } = body || {};
-        
-        if (device_id) {
-            if (!devices[device_id]) {
-                devices[device_id] = { command: 'normal' };
-            }
-            devices[device_id].lat = lat;
-            devices[device_id].lng = lng;
-            devices[device_id].battery = battery;
-            devices[device_id].last_update = new Date();
-        }
-        
+    // Jika admin mengirim perintah (misal: cmd=lock atau ring)
+    if (cmd) {
+        if (!devices[targetDevice]) devices[targetDevice] = {};
+        devices[targetDevice].command = cmd;
+        return res.status(200).json({ success: true, command: cmd });
+    }
+
+    // Jika HP anak mengirim laporan GPS & Baterai
+    if (lat && lng) {
+        if (!devices[targetDevice]) devices[targetDevice] = { command: 'normal' };
+        devices[targetDevice].lat = parseFloat(lat);
+        devices[targetDevice].lng = parseFloat(lng);
+        devices[targetDevice].battery = battery || '100';
+        devices[targetDevice].lastSeen = Date.now();
+
         return res.status(200).json({ 
-            status: 'success', 
-            command: devices[device_id]?.command || 'normal' 
+            success: true, 
+            command: devices[targetDevice].command || 'normal' 
         });
     }
 
-    return res.status(200).json({ status: 'active', devices });
+    // Default GET untuk Dashboard Admin (melihat status semua perangkat)
+    return res.status(200).json({ success: true, devices });
 }
