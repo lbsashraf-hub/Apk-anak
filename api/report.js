@@ -1,9 +1,10 @@
 let devices = {};
 
 export default function handler(req, res) {
+    // Izinkan akses publik dari mana saja tanpa batasan 403
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', '*');
 
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
