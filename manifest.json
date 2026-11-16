@@ -1,22 +1,15 @@
-const express = require('express');
-const app = express();
-
-app.use(express.json());
-
-let devices = {};
-
-app.post('/api/report', (req, res) => {
-    const { device_id, lat, lng, battery } = req.body;
-    if (device_id) {
-        if (!devices[device_id]) {
-            devices[device_id] = { command: 'normal' };
-        }
-        devices[device_id].lat = lat;
-        devices[device_id].lng = lng;
-        devices[device_id].battery = battery;
-        devices[device_id].last_update = new Date();
+{
+  "name": "SafeGuard Monitor",
+  "short_name": "SafeGuard",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3065/3065415.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
-    res.json({ status: 'success', command: devices[device_id]?.command || 'normal' });
-});
-
-module.exports = app;
+  ]
+}
