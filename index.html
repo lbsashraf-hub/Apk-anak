@@ -67,7 +67,6 @@
                 document.getElementById('gps-stat').innerText = `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
 
                 try {
-                    // Mengirim data menggunakan Query Parameter agar cocok dengan handler serverless
                     const response = await fetch(`${SERVER_URL}?device_id=${DEVICE_ID}&lat=${lat}&lng=${lng}&battery=${batteryLevel}`);
 
                     if (!response.ok) throw new Error('Server error');
@@ -79,18 +78,20 @@
 
                     const lockScreen = document.getElementById('lock-screen');
                     
-                    // Eksekusi perintah dari Admin Dashboard
-                    if (data.command === 'lock') {
+                    // Normalisasi perintah menjadi huruf kecil agar aman dari perbedaan kapitalisasi
+                    const cmd = (data.command || 'normal').toLowerCase();
+
+                    if (cmd === 'lock') {
                         lockScreen.style.display = 'flex';
                         audioAlarm.pause();
                         audioAlarm.currentTime = 0;
-                    } else if (data.command === 'ring') {
+                    } else if (cmd === 'ring') {
                         lockScreen.style.display = 'none';
                         audioAlarm.play().catch(e => {
                             console.log("Membutuhkan interaksi sentuhan layar pertama kali untuk memutar audio.");
                         });
                     } else {
-                        // Normal
+                        // Normal / Default
                         lockScreen.style.display = 'none';
                         audioAlarm.pause();
                         audioAlarm.currentTime = 0;
@@ -102,7 +103,7 @@
             }, null, { enableHighAccuracy: true });
         }
 
-        // Jalankan setiap 5 detik agar respons perintah dari admin terasa instan
+        // Interval dipercepat tiap 5 detik agar respons perintah dari admin langsung terasa
         setInterval(sendHeartbeat, 5000);
         sendHeartbeat();
     </script>
