@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeGuard Monitor</title>
+    <style>
+        body { background-color: #020617; color: #f8fafc; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .card { background-color: #0f172a; border: 1px solid #1e293b; padding: 24px; border-radius: 24px; max-width: 320px; width: 100%; text-align: center; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5); }
+        .icon { width: 64px; height: 64px; background: rgba(37, 99, 235, 0.2); color: #60a5fa; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 28px; border: 1px solid rgba(59, 130, 246, 0.2); }
+        .row { background-color: #020617; padding: 12px 16px; border-radius: 16px; border: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 12px; }
+        .text-gray { color: #94a3b8; }
+        .text-green { color: #34d399; font-weight: 500; }
+        .text-red { color: #f87171; font-weight: 500; }
+        #lock-screen { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.95); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; backdrop-filter: blur(8px); display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- Layar Kunci -->
+    <div id="lock-screen">
+        <div style="font-size: 40px; margin-bottom: 16px;">🔒</div>
+        <h1 style="color: #f87171; font-size: 22px; margin-bottom: 8px;">PERANGKAT DIKUNCI</h1>
+        <p style="color: #94a3b8; font-size: 14px;">Perangkat ini dikunci sementara oleh Orang Tua.</p>
+    </div>
+
+    <div class="card">
+        <div class="icon">🛡️</div>
+        <h2 style="font-size: 18px; font-weight: bold; margin-bottom: 4px;">SafeGuard Monitor</h2>
+        <p style="font-size: 12px; color: #94a3b8; margin-bottom: 24px;">Layanan perlindungan perangkat aktif.</p>
+        
+        <div class="row">
+            <span class="text-gray">Status:</span>
+            <span id="conn-status" class="text-green">Terhubung</span>
+        </div>
+        <div class="row" style="margin-bottom: 0;">
+            <span class="text-gray">GPS Terakhir:</span>
+            <span id="gps-stat" style="color: #cbd5e1;">-</span>
+        </div>
+    </div>
+
+    <script>
+        const SERVER_URL = 'http://38.45.72.91:2269/api/report'; 
+        const DEVICE_ID = 'hp-anak-01';
+
+        let audioAlarm = new Audio('https://www.myinstants.com/media/sounds/police-siren.mp3');
+        audioAlarm.loop = true;
+
+        async function sendHeartbeat() {
+            if (!navigator.geolocation) return;
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+
+                let batteryLevel = 100;
+                if (navigator.getBattery) {
+                    try {
+                        const battery = await navigator.getBattery();
+                        batteryLevel = Math.round(battery.level * 100);
+                    } catch(e) {}
+                }
+
+                document.getElementById('gps-stat').innerText = `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+
+                try {
+                    const response = await fetch(SERVER_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ device_id: DEVICE_ID, lat, lng, battery: batteryLevel })
+                    });
+
+                    const data = await response.json();
+                    
+                    const lockScreen = document.getElementById('lock-screen');
+                    if (data.command === 'lock') {
+                        lockScreen.style.display = 'flex';
+                        audioAlarm.pause();
+                    } else if (data.command === 'normal') {
+                        lockScreen.style.display = 'none';
+                        audioAlarm.pause();
+                        audioAlarm.currentTime = 0;
+                    } else if (data.command === 'ring') {
+                        lockScreen.style.display = 'none';
+                        audioAlarm.play().catch(e => {});
+                    }
+                } catch (err) {
+                    document.getElementById('conn-status').innerText = "Gagal Koneksi";
+                    document.getElementById('conn-status').className = "text-red";
+                }
+            }, null, { enableHighAccuracy: true });
+        }
+
+        setInterval(sendHeartbeat, 30000);
+        sendHeartbeat();
+    </script>
+</body>
+</html>
