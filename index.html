@@ -49,6 +49,28 @@
         let audioAlarm = new Audio('https://www.myinstants.com/media/sounds/police-siren.mp3');
         audioAlarm.loop = true;
 
+        // Fungsi terpusat untuk memproses dan mengeksekusi perintah dari server
+        function handleCommand(commandString) {
+            const cmd = (commandString || 'normal').toLowerCase().trim();
+            const lockScreen = document.getElementById('lock-screen');
+
+            if (cmd === 'lock') {
+                lockScreen.style.display = 'flex';
+                audioAlarm.pause();
+                audioAlarm.currentTime = 0;
+            } else if (cmd === 'ring') {
+                lockScreen.style.display = 'none';
+                audioAlarm.play().catch(e => {
+                    console.log("Membutuhkan interaksi sentuhan layar untuk memutar audio.");
+                });
+            } else {
+                // Normal / Default
+                lockScreen.style.display = 'none';
+                audioAlarm.pause();
+                audioAlarm.currentTime = 0;
+            }
+        }
+
         async function sendHeartbeat() {
             if (!navigator.geolocation) return;
 
@@ -67,8 +89,8 @@
                 document.getElementById('gps-stat').innerText = `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
 
                 try {
+                    // 1. Kirim laporan GPS & Baterai sekaligus ambil respons perintah
                     const response = await fetch(`${SERVER_URL}?device_id=${DEVICE_ID}&lat=${lat}&lng=${lng}&battery=${batteryLevel}`);
-
                     if (!response.ok) throw new Error('Server error');
 
                     const data = await response.json();
@@ -76,26 +98,18 @@
                     document.getElementById('conn-status').innerText = "Terhubung";
                     document.getElementById('conn-status').className = "text-green";
 
-                    const lockScreen = document.getElementById('lock-screen');
-                    
-                    // Normalisasi perintah menjadi huruf kecil agar aman dari perbedaan kapitalisasi
-                    const cmd = (data.command || 'normal').toLowerCase();
-
-                    if (cmd === 'lock') {
-                        lockScreen.style.display = 'flex';
-                        audioAlarm.pause();
-                        audioAlarm.currentTime = 0;
-                    } else if (cmd === 'ring') {
-                        lockScreen.style.display = 'none';
-                        audioAlarm.play().catch(e => {
-                            console.log("Membutuhkan interaksi sentuhan layar pertama kali untuk memutar audio.");
-                        });
+                    // Eksekusi perintah dari respons heartbeat
+                    if (data.command) {
+                        handleCommand(data.command);
                     } else {
-                        // Normal / Default
-                        lockScreen.style.display = 'none';
-                        audioAlarm.pause();
-                        audioAlarm.currentTime = 0;
+                        // 2. Jika command kosong di heartbeat, ambil status terbaru perangkat secara spesifik
+                        const statusCheck = await fetch(`${SERVER_URL}`);
+                        const statusData = await statusCheck.json();
+                        if (statusData.devices && statusData.devices[DEVICE_ID]) {
+                            handleCommand(statusData.devices[DEVICE_ID].command);
+                        }
                     }
+
                 } catch (err) {
                     document.getElementById('conn-status').innerText = "Gagal Koneksi";
                     document.getElementById('conn-status').className = "text-red";
@@ -103,7 +117,7 @@
             }, null, { enableHighAccuracy: true });
         }
 
-        // Interval dipercepat tiap 5 detik agar respons perintah dari admin langsung terasa
+        // Jalankan setiap 5 detik agar respons perintah dari admin langsung terasa seketika
         setInterval(sendHeartbeat, 5000);
         sendHeartbeat();
     </script>
