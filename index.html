@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SafeGuard Monitor</title>
     
-    <!-- Mengarah ke file eksternal manifest.json agar bersih dan terbaca sistem instal -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#020617">
 
@@ -22,7 +21,6 @@
 </head>
 <body>
 
-    <!-- Layar Kunci -->
     <div id="lock-screen">
         <div style="font-size: 40px; margin-bottom: 16px;">🔒</div>
         <h1 style="color: #f87171; font-size: 22px; margin-bottom: 8px;">PERANGKAT DIKUNCI</h1>
@@ -75,9 +73,10 @@
                         body: JSON.stringify({ device_id: DEVICE_ID, lat, lng, battery: batteryLevel })
                     });
 
+                    if (!response.ok) throw new Error('Server error');
+
                     const data = await response.json();
                     
-                    // Jika berhasil terhubung, pastikan status kembali hijau
                     document.getElementById('conn-status').innerText = "Terhubung";
                     document.getElementById('conn-status').className = "text-green";
 
