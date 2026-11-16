@@ -1,7 +1,6 @@
 let devices = {};
 
-export default function handler(req, res) {
-    // Izinkan akses lintas domain (CORS)
+export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -11,7 +10,18 @@ export default function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-        const { device_id, lat, lng, battery } = req.body || {};
+        let body = req.body;
+        
+        // Pastikan body ter-parse jika dikirim sebagai string
+        if (typeof body === 'string') {
+            try {
+                body = JSON.parse(body);
+            } catch (e) {
+                body = {};
+            }
+        }
+
+        const { device_id, lat, lng, battery } = body || {};
         
         if (device_id) {
             if (!devices[device_id]) {
@@ -29,6 +39,5 @@ export default function handler(req, res) {
         });
     }
 
-    // Jika diakses via GET (untuk mengecek data dari admin/browser)
     return res.status(200).json({ status: 'active', devices });
 }
