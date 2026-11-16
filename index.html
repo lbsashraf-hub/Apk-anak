@@ -5,22 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SafeGuard Monitor</title>
     
-    <!-- Konfigurasi PWA Agar Bisa Diinstal Langsung via Browser -->
-    <link rel="manifest" href='data:application/manifest+json,{
-      "name": "SafeGuard Monitor",
-      "short_name": "SafeGuard",
-      "start_url": "./",
-      "display": "standalone",
-      "background_color": "#020617",
-      "theme_color": "#020617",
-      "icons": [
-        {
-          "src": "https://cdn-icons-png.flaticon.com/512/3065/3065415.png",
-          "sizes": "512x512",
-          "type": "image/png"
-        }
-      ]
-    }'>
+    <!-- Mengarah ke file eksternal manifest.json agar bersih dan terbaca sistem instal -->
+    <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#020617">
 
     <style>
@@ -105,7 +91,7 @@
                     }
                 } catch (err) {
                     document.getElementById('conn-status').innerText = "Gagal Koneksi";
-                    document.getElementById('conn-status').className = "text-red";
+                    document.getElementById('conn-status', className = "text-red");
                 }
             }, null, { enableHighAccuracy: true });
         }
