@@ -77,6 +77,10 @@
 
                     const data = await response.json();
                     
+                    // Jika berhasil terhubung, pastikan status kembali hijau
+                    document.getElementById('conn-status').innerText = "Terhubung";
+                    document.getElementById('conn-status').className = "text-green";
+
                     const lockScreen = document.getElementById('lock-screen');
                     if (data.command === 'lock') {
                         lockScreen.style.display = 'flex';
@@ -91,7 +95,7 @@
                     }
                 } catch (err) {
                     document.getElementById('conn-status').innerText = "Gagal Koneksi";
-                    document.getElementById('conn-status', className = "text-red");
+                    document.getElementById('conn-status').className = "text-red";
                 }
             }, null, { enableHighAccuracy: true });
         }
