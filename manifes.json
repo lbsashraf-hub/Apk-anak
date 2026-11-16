@@ -1,0 +1,15 @@
+{
+  "name": "SafeGuard Monitor",
+  "short_name": "SafeGuard",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3065/3065415.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
